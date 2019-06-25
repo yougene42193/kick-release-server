@@ -4,50 +4,74 @@ const Treeize = require('treeize')
 const ShoepostsService = {
     getAllPosts(db) {
         return db
-            .from('kick_release_posts AS post')
+            .from('kick_release_posts AS pst')
             .select(
-                'post.id',
-                'post.title',
-                'post.content',
+                'pst.id',
+                'pst.brand',
+                'pst.title',
+                'pst.release_date',
+                'pst.content',
                 ...userFields,
                 db.raw(
-                    `count(DISTINCT rev) AS number_of_comments`
+                    `count(DISTINCT com) AS number_of_comments`
                 ),
             )
             .leftJoin(
-                'kick_release_comments AS rev',
-                'post.id',
-                'comment.post.id',
+                'kick_release_comments AS com',
+                'pst.id',
+                'com.post_id',
             )
             .leftJoin(
-                'kick_release_users AS user',
-                'post.user_id',
-                'user.id',
+                'kick_release_users AS usr',
+                'pst.user_id',
+                'usr.id',
             )
-            .groupBy('post.id', 'user.id')
+            .groupBy('pst.id', 'usr.id')
     },
 
     getById(db, id) {
         return ShoepostsService.getAllPosts(db)
-            .where('post.id', id)
+            .where('pst.id', id)
             .first()
+    },
+
+    insertPost(knex, newPost) {
+        return knex
+            .insert(newPost)
+            .into('kick_release_posts')
+            .returning('*')
+            .then(rows => {
+                return rows[0];
+            })
+    },
+
+    deletePost(knex, id) {
+        return knex('kick_release_posts')
+            .where({ id })
+            .delete();
+    },
+
+    updatePost(knex, id, newPostFields) {
+        return knex('kick_release_posts')
+            .where({ id })
+            .update(newPostFields);
     },
 
     getCommentsForPost(db, post_id) {
         return db
-            .from('kick_release_comments AS comment')
+            .from('kick_release_comments AS com')
             .select(
-                'comment.id',
-                'comment.text',
+                'com.id',
+                'com.text',
                 ...userFields
             )
-            .where('comment.post_id', post_id)
+            .where('com.post_id', post_id)
             .leftJoin(
-                'kick_release_users AS user',
-                'comment.user_id',
-                'user.id',
+                'kick_release_users AS usr',
+                'com.user_id',
+                'usr.id',
             )
-            .groupBy('comment.id', 'comment.id')
+            .groupBy('com.id', 'usr.id')
     },
 
     serializePosts(posts) {
@@ -61,15 +85,17 @@ const ShoepostsService = {
 
         return {
             id: postData.id,
+            brand: xss(postData.brand),
             title: xss(postData.title),
+            release_date: postData.release_date,
             content: xss(postData.content),
             user: postData.user || {},
-            number_of_reviews: Number(postData.number_of_reviews) || 0,
+            number_of_comments: Number(postData.number_of_comments) || 0,
         }
     },
 
     serializePostComments(comments) {
-        return comments.map(this.serializePostComments)
+        return comments.map(this.serializePostComment)
     },
 
     serializePostComment(comment) {
@@ -87,8 +113,8 @@ const ShoepostsService = {
 }
 
 const userFields = [
-    'user.id AS user:id',
-    'user.user_name AS user:user_name',
+    'usr.id AS user:id',
+    'usr.user_name AS user:user_name',
 ]
 
 module.exports = ShoepostsService

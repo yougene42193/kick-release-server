@@ -2,6 +2,10 @@
 const xss = require('xss');
 
 const CommentsService = {
+  getAllComments(knex) {
+    return knex.select('*').from('kick_release_comments');
+  },
+
   getById(db, id) {
     return db
       .from('kick_release_comments AS comment')
