@@ -8,6 +8,13 @@ const { requireAuth } = require('../middleware/jwt-auth')
 const shoepostsRouter = express.Router()
 const jsonParser = express.json();
 
+const serializePost = ( post ) => ({
+    id: post.id,
+    brand: xss(post.brand),
+    title: xss(post.title),
+    content: xss(post.content),
+})
+
 shoepostsRouter
     .route('/')
     //GET all posts in the database
