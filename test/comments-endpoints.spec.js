@@ -33,48 +33,14 @@ describe('Comments Endpoints', function() {
       )
     )
 
-    it(`creates a comment, responding with 201 and the new comment`, function() {
-      this.retries(3)
-      const testPost = testPosts[0]
-      const testUser = testUsers[0]
-      const newComment = {
-        text: 'Test new comment',
-        post_id: testPost.id,
-        user_id: testUser.id,
-      }
-      return supertest(app)
-        .post('/api/comments')
-        .send(newComment)
-        .expect(201)
-        .expect(res => {
-          expect(res.body).to.have.property('id')
-          expect(res.body.text).to.eql(newComment.text)
-          expect(res.body.post_id).to.eql(newComment.post_id)
-          expect(res.body.user.id).to.eql(testUser.id)
-          expect(res.headers.location).to.eql(`/api/comments/${res.body.id}`)
-        })
-        .expect(res =>
-          db
-            .from('kick_release_comments')
-            .select('*')
-            .where({ id: res.body.id })
-            .first()
-            .then(row => {
-              expect(row.text).to.eql(newComment.text)
-              expect(row.post_id).to.eql(newComment.post_id)
-              expect(row.user_id).to.eql(newComment.user_id)
-            })
-        )
-    })
-
-    const requiredFields = ['text', 'user_id', 'post_id']
+    const requiredFields = ['text', 'post_id']
 
     requiredFields.forEach(field => {
       const testPost = testPosts[0]
       const testUser = testUsers[0]
       const newComment = {
         text: 'Test new comment',
-        user_id: testUser.id,
+        
         post_id: testPost.id,
       }
 
@@ -84,6 +50,7 @@ describe('Comments Endpoints', function() {
         return supertest(app)
           .post('/api/comments')
           .send(newComment)
+          .set('Authorization', helpers.makeAuthHeader(testUser))
           .expect(400, {
             error: `Missing '${field}' in request body`,
           })

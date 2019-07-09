@@ -1,3 +1,6 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
 function makeUsersArray() {
     return [
       {
@@ -93,10 +96,9 @@ function makeUsersArray() {
     const user = users
       .find(user => user.id === post.user_id)
   
-    const postComments = comments
-      .filter(comment => comment.post_id === comment.id)
-  
-    const number_of_comments = postComments.length
+    const number_of_comments = comments
+      .filter(comment => comment.post_id === post.id)
+      .length
 
     return {
       id: post.id,
@@ -163,6 +165,20 @@ function makeUsersArray() {
         RESTART IDENTITY CASCADE`
     )
   }
+
+  function seedUsers(db, users) {
+    const preppedUsers = users.map(user => ({
+      ...user,
+      password: bcrypt.hashSync(user.password, 1)
+    }))
+    return db.into('kick_release_users').insert(preppedUsers)
+      .then(() =>
+        db.raw(
+          `SELECT setval('kick_release_users_id_seq', ?)`,
+          [users[users.length - 1].id],
+        )
+    )
+}
   
   function seedPostsTables(db, users, posts, comments=[]) {
     return db
@@ -188,6 +204,14 @@ function makeUsersArray() {
           .insert([post])
       )
   }
+
+  function makeAuthHeader(user, secret = process.env.JWT_SECRET) {
+    const token = jwt.sign({ user_id: user.id }, secret, {
+      subject: user.user_name,
+      algorithm: 'HS256',
+    })
+    return `Bearer ${token}`
+  }
   
   module.exports = {
     makeUsersArray,
@@ -196,10 +220,11 @@ function makeUsersArray() {
     makeExpectedPostComments,
     makeMaliciousPost,
     makeCommentsArray,
-  
     makePostsFixtures,
     cleanTables,
+    seedUsers,
     seedPostsTables,
     seedMaliciousPost,
+    makeAuthHeader,
   }
   

@@ -7,6 +7,7 @@ const usersRouter = express.Router()
 const jsonBodyParser = express.json()
 
 usersRouter
+  //post user to router
   .post('/', jsonBodyParser, (req, res, next) => {
     const { password, user_name } = req.body
 

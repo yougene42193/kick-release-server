@@ -15,6 +15,7 @@ const serializeComment = (comment) => ({
 });
 
 commentsRouter 
+  //get comments
   .route('/')
   .get((req, res, next) => {
     const knexInstance = req.app.get('db');
@@ -24,6 +25,7 @@ commentsRouter
       })
       .catch(next);
   })
+  //Post comments
   .post(requireAuth, jsonBodyParser, (req, res, next) => {
     const { post_id, text } = req.body;
     const newComment = { post_id, text };

@@ -52,6 +52,7 @@ shoepostsRouter
 
 shoepostsRouter
     .route('/:post_id')
+    //get single post
     .all(checkPostExists)
     .get((req, res) => {
         res.json(ShoepostsService.serializePost(res.post))
@@ -116,6 +117,7 @@ shoepostsRouter
     })
 
 shoepostsRouter.route('/:post_id/comments/')
+    //get comments for post
     .all(checkPostExists)
     .get((req, res, next) => {
         ShoepostsService.getCommentsForPost(

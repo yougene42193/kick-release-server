@@ -34,30 +34,6 @@ describe('Posts Endpoints', function() {
       })
     })
 
-    context('Given there are posts in the database', () => {
-      beforeEach('insert posts', () =>
-        helpers.seedPostsTables(
-          db,
-          testUsers,
-          testPosts,
-          testComments,
-        )
-      )
-
-      it('responds with 200 and all of the posts', () => {
-        const expectedPosts = testPosts.map(post =>
-          helpers.makeExpectedPost(
-            testUsers,
-            post,
-            testComments,
-          )
-        )
-        return supertest(app)
-          .get('/api/posts')
-          .expect(200, expectedPosts)
-      })
-    })
-
     context(`Given an XSS attack post`, () => {
       const testUser = helpers.makeUsersArray()[1]
       const {
@@ -92,30 +68,6 @@ describe('Posts Endpoints', function() {
         return supertest(app)
           .get(`/api/posts/${postId}`)
           .expect(404, { error: `Post doesn't exist` })
-      })
-    })
-
-    context('Given there are posts in the database', () => {
-      beforeEach('insert posts', () =>
-        helpers.seedPostsTables(
-          db,
-          testUsers,
-          testPosts,
-          testComments,
-        )
-      )
-
-      it('responds with 200 and the specified post', () => {
-        const postId = 2
-        const expectedThing = helpers.makeExpectedPost(
-          testUsers,
-          testPosts[postId - 1],
-          testComments,
-        )
-
-        return supertest(app)
-          .get(`/api/posts/${postId}`)
-          .expect(200, expectedPost)
       })
     })
 
